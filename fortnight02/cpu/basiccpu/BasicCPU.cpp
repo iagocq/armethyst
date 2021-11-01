@@ -117,6 +117,10 @@ int BasicCPU::ID()
 			break;
 		// case TODO
 		// x101 Data Processing -- Register on page C4-278
+        case 0x0A000000: // x = 0
+        case 0x1A000000: // x = 1
+            return decodeDataProcReg();
+            break;
 		default:
 			return 1; // instrução não implementada
 	}
@@ -227,10 +231,32 @@ int BasicCPU::decodeDataProcReg() {
 	//				'add w1, w1, w0'
 	//		que aparece na linha 43 de isummation.S e no endereço 0x68
 	//		de txt_isummation.o.txt.
+
+	unsigned int m, n, d;
 	
-	
-	// instrução não implementada
-	return 1;
+	switch (IR & 0xFF200000)
+	{
+        case 0x0B000000: // ADD (shifted register) 32-bit
+            if (IR & 0x00C00000) return 1; // shift não implementado
+
+            m = (IR & 0x001F0000) >> 16;
+            n = (IR & 0x000003E0) >> 5;
+            d = IR & 0x0000001F;
+
+            A = getW(n);
+            B = getW(m);
+            Rd = &R[d];
+
+            ALUctrl = ALUctrlFlag::ADD;
+            MEMctrl = MEMctrlFlag::MEM_NONE;
+            WBctrl  = WBctrlFlag::RegWrite;
+            MemtoReg = false;
+            return 0;
+
+        default:
+            return 1;
+    };
+	return 0;
 }
 
 /**
@@ -274,6 +300,9 @@ int BasicCPU::EXI()
 			ALUout = A - B;
 			// ATIVIDADE FUTURA: setar flags NCZF
 			return 0;
+        case ALUctrlFlag::ADD:
+            ALUout = A + B;
+            return 0;
 		default:
 			// Controle não implementado
 			return 1;
