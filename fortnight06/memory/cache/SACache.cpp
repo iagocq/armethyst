@@ -6,11 +6,11 @@
 
     (PT) armethyst - Um simulador ARM simples escrito em C++ para o ensino de
     Arquitetura de Computadores. Software livre licenciado pela MIT License
-    (veja a licença, em inglês, abaixo).
+    (veja a licenï¿½a, em inglï¿½s, abaixo).
 
     (EN) MIT LICENSE:
 
-    Copyright 2020 André Vital Saúde
+    Copyright 2020 Andrï¿½ Vital Saï¿½de
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,8 @@
 #include "SACache.h"
 
 #include <cstddef>
+#include <cstdint>
+#include <strings.h>
 
 using namespace std;
 
@@ -48,30 +50,39 @@ using namespace std;
  * must be a power of 2.
  */
 SACache::SACache(unsigned int size, unsigned int lineSize, unsigned int associativity) : Cache::Cache(size,lineSize,associativity) {
+	bool validArgs = true;
 
-	bool validArgs = false;
-	// TODO
-	// 1. Note que este construtor chama o construtor da superclasse! Veja o que já é feito
-	//		no construtor da superclasse.
-	// 2. Calcule e inicialize o atributo numSets.
-	// 3. Validar os atributos que acabam e ser inicializados:
-	//		os valores são coerentes, ou seja, 'numSets*associativity*lineSize == size'?
-	//		size, numSets, lineSize e associativity são potências de 2?
+	numSets = size / associativity / lineSize;
+
+	validArgs = validArgs && numSets*associativity*lineSize == size;
+	validArgs = validArgs && potencia2(size) && potencia2(numSets) && potencia2(lineSize) && potencia2(associativity);
+
 	if (!validArgs) {
 		throw "Bad FACache initialization. Invalid arguments.";
 	}
-	
-	// TODO
-	// 4. Alocar o atributo 'sets' com 'numSets' ponteiros para FACache (FACache *)
-	// 5. Percorrer 'sets' e, para cada índice, alocar uma FACache de dimensões coerentes com
-	//		esta SACache.
+
+	offsetMask = lineSize - 1;
+	lookupMask = numSets - 1;
+	lookupShift = ffs(lineSize) - 1;
+
+	sets = new FACache*[numSets];
+	for (unsigned int i = 0; i < numSets; i++) {
+		sets[i] = new FACache(size / numSets, lineSize);
+	}
 }
 
 SACache::~SACache() {
-	// TODO
-	// 1. Fazer 'delete' para toda a memória alocada.
-	//		ATENÇÃO: percorra 'sets' e faça delete de cada FACache para depois fazer delete
-	//		de 'sets'
+	for (unsigned int i = 0; i < numSets; i++) {
+		delete sets[i];
+	}
+
+	delete[] sets;
+}
+
+void SACache::splitAddress(uint64_t address, uint64_t &tag, uint64_t &lookup, uint64_t &offset) {
+	offset = address & offsetMask;
+	lookup = (address & lookupMask) >> lookupShift;
+	tag = address & ~(offsetMask | lookupMask);
 }
 
 /**
@@ -82,14 +93,9 @@ SACache::~SACache() {
  * 		false, if cache miss
  */
 bool SACache::read32(uint64_t address, uint32_t * value) {
-	// TODO
-	// 1. Encontre tag, lookup e offset do address. Sugestão: faça um ou mais procedimentos,
-	//		pois isso será utilizado nos próximos métodos. Você pode ainda criar atributos
-	//		privados na classe (SACache.h) e incializa-los no construtor, para armazenar as
-	//		máscaras usadas na extração desses campos.
-	// 2. Delegue a tarefa para read32 da FACache que se encontra em sets[lookup].
-	
-	return false;
+	uint64_t tag, lookup, offset;
+	splitAddress(address, tag, lookup, offset);
+	return sets[lookup]->read32(address, value);
 }
 
 /**
@@ -100,9 +106,9 @@ bool SACache::read32(uint64_t address, uint32_t * value) {
  * 		false, if cache miss
  */
 bool SACache::read64(uint64_t address, uint64_t * value) {
-	// TODO
-	// 1. Repita o código de read32 alterando apenas a delegação da tarefa para read64.
-	return false;
+	uint64_t tag, lookup, offset;
+	splitAddress(address, tag, lookup, offset);
+	return sets[lookup]->read64(address, value);
 }
 
 /**
@@ -113,9 +119,9 @@ bool SACache::read64(uint64_t address, uint64_t * value) {
  * 		false, if cache miss
  */
 bool SACache::write32(uint64_t address, uint32_t value) {
-	// TODO
-	// 1. Repita o código de read32 alterando apenas a delegação da tarefa para write32.
-	return false;
+	uint64_t tag, lookup, offset;
+	splitAddress(address, tag, lookup, offset);
+	return sets[lookup]->write32(address, value);
 }
 
 /**
@@ -126,9 +132,9 @@ bool SACache::write32(uint64_t address, uint32_t value) {
  * 		false, if cache miss
  */
 bool SACache::write64(uint64_t address, uint64_t value) {
-	// TODO
-	// 1. Repita o código de read32 alterando apenas a delegação da tarefa para write64.
-	return false;
+	uint64_t tag, lookup, offset;
+	splitAddress(address, tag, lookup, offset);
+	return sets[lookup]->write64(address, value);
 }
 
 /**
@@ -144,8 +150,12 @@ bool SACache::write64(uint64_t address, uint64_t value) {
  * 		NULL, if the line is not set as modified
  * 		a pointer to a copy of the line, if the line is set as modified
  */
-char * SACache::fetchLine(uint64_t address, char * data) {
-	// TODO
-	// 1. Repita o código de read32 alterando apenas a delegação da tarefa para fetchLine.
-	return NULL;
+char * SACache::fetchLine(uint64_t address, char * data, uint64_t &oldLine) {
+	uint64_t tag, lookup, offset;
+	splitAddress(address, tag, lookup, offset);
+	char *replaced = sets[lookup]->fetchLine(address, data, oldLine);
+	if (replaced) {
+		oldLine += lookup << lookupShift;
+	}
+	return replaced;
 }

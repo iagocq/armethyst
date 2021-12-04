@@ -6,11 +6,11 @@
 
     (PT) armethyst - Um simulador ARM simples escrito em C++ para o ensino de
     Arquitetura de Computadores. Software livre licenciado pela MIT License
-    (veja a licença, em inglês, abaixo).
+    (veja a licenï¿½a, em inglï¿½s, abaixo).
 
     (EN) MIT LICENSE:
 
-    Copyright 2020 André Vital Saúde
+    Copyright 2020 Andrï¿½ Vital Saï¿½de
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,7 @@
 
 #include "Cache.h"
 #include "FACache.h"
+#include <cstdint>
 
 using namespace std;
 
@@ -43,8 +44,9 @@ class SACache : public Cache
 {
 protected:
 	FACache **sets;
-
+    uint64_t offsetMask, lookupMask, lookupShift;
 public:
+    void splitAddress(uint64_t address, uint64_t &tag, uint64_t &lookup, uint64_t &offset);
 
 	/**
 	 * Constructs a SACache of 'size' bytes organized in sets of associativity 'associativity'
@@ -105,6 +107,6 @@ public:
      * 		null, if the line is not set as modified
      * 		a pointer to a copy of the line, if the line is set as modified
      */
-    char * fetchLine(uint64_t address, char * data);
+    char * fetchLine(uint64_t address, char * data, uint64_t &oldLine);
     
 };

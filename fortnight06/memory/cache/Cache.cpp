@@ -6,11 +6,11 @@
 
     (PT) armethyst - Um simulador ARM simples escrito em C++ para o ensino de
     Arquitetura de Computadores. Software livre licenciado pela MIT License
-    (veja a licença, em inglês, abaixo).
+    (veja a licenï¿½a, em inglï¿½s, abaixo).
 
     (EN) MIT LICENSE:
 
-    Copyright 2020 André Vital Saúde
+    Copyright 2020 Andrï¿½ Vital Saï¿½de
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -89,4 +89,8 @@ unsigned int Cache::getAssociativity() {
 }
 unsigned int Cache::getNumSets() {
 	return numSets;
+}
+
+bool potencia2(unsigned int x) {
+	return x != 0 && (x & (x - 1)) == 0;
 }

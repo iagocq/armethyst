@@ -107,7 +107,7 @@ $(ODIR)/MemoryLogger.o: MemoryLogger.cpp MemoryLogger.h
 #
 # general
 #
-_OBJ = BasicMemory.o Corei7Memory.o MemoryLoader.o MemoryLogger.o CPUImpl.o ProcessorImpl.o Factory.o Util.o
+_OBJ = BasicMemory.o Corei7Memory.o MemoryLoader.o MemoryLogger.o CPUImpl.o ProcessorImpl.o Factory.o Util.o Cache.o FACache.o SACache.o
 
 #
 # armethyst
