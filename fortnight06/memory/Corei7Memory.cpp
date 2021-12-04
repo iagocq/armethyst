@@ -84,7 +84,7 @@ char *Corei7Memory::getData() {
  */
 uint32_t Corei7Memory::readInstruction32(uint64_t address)
 {
-	int hitLevel = 1;
+	int hitLevel;
 	uint32_t value;
 
 	if (l1i->read32(address, &value)) {
@@ -96,16 +96,11 @@ uint32_t Corei7Memory::readInstruction32(uint64_t address)
 		hitLevel = 3;
 	}
 
-	uint64_t oldLine;
 	if (hitLevel > 1) {
-		l1i->fetchLine(address, mainMemory->getData(), oldLine);
+		l1i->fetchLine(address, mainMemory->getData());
 	}
 	if (hitLevel > 2) {
-		char *data;
-		if ((data = l2->fetchLine(address, mainMemory->getData(), oldLine))) {
-			memcpy(&mainMemory->getData()[address+oldLine], data, 64);
-			delete[] data;
-		}
+		l2->fetchLine(address, mainMemory->getData());
 	}
 
 	// n�o mexa nas linhas a seguir, s�o necess�rias para a corre��o do trabalho
@@ -118,7 +113,7 @@ uint32_t Corei7Memory::readInstruction32(uint64_t address)
  */
 uint32_t Corei7Memory::readData32(uint64_t address)
 {
-	int hitLevel = 1;
+	int hitLevel;
 	uint32_t value;
 
 	if (l1d->read32(address, &value)) {
@@ -130,16 +125,11 @@ uint32_t Corei7Memory::readData32(uint64_t address)
 		hitLevel = 3;
 	}
 
-	uint64_t oldLine;
 	if (hitLevel > 1) {
-		l1d->fetchLine(address, mainMemory->getData(), oldLine);
+		l1d->fetchLine(address, mainMemory->getData());
 	}
 	if (hitLevel > 2) {
-		char *data;
-		if ((data = l2->fetchLine(address, mainMemory->getData(), oldLine))) {
-			memcpy(&mainMemory->getData()[address+oldLine], data, 64);
-			delete[] data;
-		}
+		l2->fetchLine(address, mainMemory->getData());
 	}
 	
 	// n�o mexa nas linhas a seguir, s�o necess�rias para a corre��o do trabalho
@@ -152,11 +142,11 @@ uint32_t Corei7Memory::readData32(uint64_t address)
  */
 uint64_t Corei7Memory::readData64(uint64_t address)
 {
-	int hitLevel = 1;
+	int hitLevel;
 	uint64_t value;
 	
 	if (l1d->read64(address, &value)) {
-		return value;
+		hitLevel = 1;
 	} else if (l2->read64(address, &value)) {
 		hitLevel = 2;
 	} else {
@@ -164,16 +154,11 @@ uint64_t Corei7Memory::readData64(uint64_t address)
 		hitLevel = 3;
 	}
 
-	uint64_t oldLine;
 	if (hitLevel > 1) {
-		l1d->fetchLine(address, mainMemory->getData(), oldLine);
+		l1d->fetchLine(address, mainMemory->getData());
 	}
 	if (hitLevel > 2) {
-		char *data;
-		if ((data = l2->fetchLine(address, mainMemory->getData(), oldLine))) {
-			memcpy(&mainMemory->getData()[address+oldLine], data, 64);
-			delete[] data;
-		}
+		l2->fetchLine(address, mainMemory->getData());
 	}
 
 	// n�o mexa nas linhas a seguir, s�o necess�rias para a corre��o do trabalho
@@ -195,26 +180,17 @@ void Corei7Memory::writeInstruction32(uint64_t address, uint32_t value)
  */
 void Corei7Memory::writeData32(uint64_t address, uint32_t value)
 {
-	int hitLevel = 1;
+	int hitLevel;
 
-	l1d->write32(address, value);
-
-	if (l2->write32(address, value)) {
+	if (l1d->write32(address, value)) {
+		hitLevel = 1;
+	} else if (l2->write32(address, value)) {
 		hitLevel = 2;
 	} else {
 		hitLevel = 3;
 	}
 
-	uint64_t oldLine;
-	if (hitLevel > 2) {
-		char *data;
-		if ((data = l2->fetchLine(address, mainMemory->getData(), oldLine))) {
-			memcpy(&mainMemory->getData()[address+oldLine], data, 64);
-			delete[] data;
-		}
-
-		l2->write32(address, value);
-	}
+	mainMemory->writeData32(address, value);
 	
 	// n�o mexa nas linhas a seguir, s�o necess�rias para a corre��o do trabalho
 	logger->memlog(MemoryLogger::WRITE32,address,hitLevel);
@@ -225,26 +201,17 @@ void Corei7Memory::writeData32(uint64_t address, uint32_t value)
  */
 void Corei7Memory::writeData64(uint64_t address, uint64_t value)
 {
-	int hitLevel = 1;
+	int hitLevel;
 
-	l1d->write64(address, value);
-
-	if (l2->write64(address, value)) {
+	if (l1d->write64(address, value)) {
+		hitLevel = 1;
+	} else if (l2->write64(address, value)) {
 		hitLevel = 2;
 	} else {
 		hitLevel = 3;
 	}
 
-	uint64_t oldLine;
-	if (hitLevel > 2) {
-		char *data;
-		if ((data = l2->fetchLine(address, mainMemory->getData(), oldLine))) {
-			memcpy(&mainMemory->getData()[address+oldLine], data, 64);
-			delete[] data;
-		}
-
-		l2->write64(address, value);
-	}
+	mainMemory->writeData64(address, value);
 
 	// n�o mexa nas linhas a seguir, s�o necess�rias para a corre��o do trabalho
 	logger->memlog(MemoryLogger::WRITE64,address,hitLevel);

@@ -114,7 +114,7 @@ public:
      * 		null, if the line is not set as modified
      * 		a pointer to a copy of the line, if the line is set as modified
      */
-    virtual char * fetchLine(uint64_t address, char * data, uint64_t &oldLine) = 0;
+    virtual char * fetchLine(uint64_t address, char * data) = 0;
 
 };
 

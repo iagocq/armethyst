@@ -210,7 +210,7 @@ bool FACache::write64(uint64_t address, uint64_t value) {
  * 		NULL, if the line is not set as modified
  * 		a pointer to a copy of the line, if the line is set as modified
  */
-char * FACache::fetchLine(uint64_t address, char * data, uint64_t &oldLine) {
+char * FACache::fetchLine(uint64_t address, char * data) {
 	char *removedLine = NULL;
 	unsigned int localWriteIndex = writeIndex;
 
@@ -223,7 +223,6 @@ char * FACache::fetchLine(uint64_t address, char * data, uint64_t &oldLine) {
 	}
 
 	if (isDirty(localWriteIndex)) {
-		oldLine = directory[localWriteIndex] & ~1;
 		removedLine = new char[lineSize];
 		memcpy(removedLine, &this->data[localWriteIndex*lineSize], lineSize);
 	}

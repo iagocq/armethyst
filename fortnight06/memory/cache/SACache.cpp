@@ -150,12 +150,8 @@ bool SACache::write64(uint64_t address, uint64_t value) {
  * 		NULL, if the line is not set as modified
  * 		a pointer to a copy of the line, if the line is set as modified
  */
-char * SACache::fetchLine(uint64_t address, char * data, uint64_t &oldLine) {
+char * SACache::fetchLine(uint64_t address, char * data) {
 	uint64_t tag, lookup, offset;
 	splitAddress(address, tag, lookup, offset);
-	char *replaced = sets[lookup]->fetchLine(address, data, oldLine);
-	if (replaced) {
-		oldLine += lookup << lookupShift;
-	}
-	return replaced;
+	return sets[lookup]->fetchLine(address, data);
 }
