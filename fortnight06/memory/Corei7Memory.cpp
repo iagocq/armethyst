@@ -190,6 +190,9 @@ void Corei7Memory::writeData32(uint64_t address, uint32_t value)
 		hitLevel = 3;
 	}
 
+	if (hitLevel < 2) {
+		l2->write32(address, value);
+	}
 	mainMemory->writeData32(address, value);
 	
 	// n�o mexa nas linhas a seguir, s�o necess�rias para a corre��o do trabalho
@@ -211,6 +214,9 @@ void Corei7Memory::writeData64(uint64_t address, uint64_t value)
 		hitLevel = 3;
 	}
 
+	if (hitLevel < 2) {
+		l2->write64(address, value);
+	}
 	mainMemory->writeData64(address, value);
 
 	// n�o mexa nas linhas a seguir, s�o necess�rias para a corre��o do trabalho
