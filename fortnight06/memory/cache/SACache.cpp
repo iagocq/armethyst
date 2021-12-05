@@ -62,8 +62,12 @@ SACache::SACache(unsigned int size, unsigned int lineSize, unsigned int associat
 	}
 
 	offsetMask = lineSize - 1;
-	lookupMask = numSets - 1;
+
+	// ex: lineSize = 8 = 0b1000, ffs(lineSize) = 4.
+	// ffs - 1 = 3 é o shift à direita necessário pra
+	// mover o que vem depois de offset para o início de uma palavra
 	lookupShift = ffs(lineSize) - 1;
+	lookupMask = (numSets - 1) << lookupShift;
 
 	sets = new FACache*[numSets];
 	for (unsigned int i = 0; i < numSets; i++) {
@@ -79,12 +83,6 @@ SACache::~SACache() {
 	delete[] sets;
 }
 
-void SACache::splitAddress(uint64_t address, uint64_t &tag, uint64_t &lookup, uint64_t &offset) {
-	offset = address & offsetMask;
-	lookup = (address & lookupMask) >> lookupShift;
-	tag = address & ~(offsetMask | lookupMask);
-}
-
 /**
  * Reads the 32 bit value 'value' in address 'address'.
  * 
@@ -96,6 +94,12 @@ bool SACache::read32(uint64_t address, uint32_t * value) {
 	uint64_t tag, lookup, offset;
 	splitAddress(address, tag, lookup, offset);
 	return sets[lookup]->read32(address, value);
+}
+
+void SACache::splitAddress(uint64_t address, uint64_t &tag, uint64_t &lookup, uint64_t &offset) {
+	offset = address & offsetMask;
+	lookup = (address & lookupMask) >> lookupShift;
+	tag = address & ~(offsetMask | lookupMask);
 }
 
 /**

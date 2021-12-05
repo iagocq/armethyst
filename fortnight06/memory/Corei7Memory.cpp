@@ -57,13 +57,13 @@ Corei7Memory::~Corei7Memory() {
  * ou seja, no c�digo mesmo!
  */
 void Corei7Memory::initHierarchy() {
-	// TODO
-	// A instancia��o da mem�ria principal j� est� implementada no construtor.
-	// 1. Instanciar as caches, conforme hierarquia definida no enunciado do trabalho:
-	// 		l1i: cache de 2KB, 4 vias, linhas de 64B (escrita n�o se aplica)
-	// 		l1d: cache de 2KB, 8 vias, linhas de 64B, estrat�gia write-through
-	// 		l2: cache de 8KB, 8 vias, linhas de 64B, estrat�gia writeback
+	// l1i: cache de 2KB, 4 vias, linhas de 64B (escrita n�o se aplica)
+	// l1d: cache de 2KB, 8 vias, linhas de 64B, estrat�gia write-through
+	// l2: cache de 8KB, 8 vias, linhas de 64B, estrat�gia write-through
 
+	// vias = numSets
+	// size = lineSize * associativity * numSets
+	// associativity = size / lineSize / numSets
 	l1i = new SACache(2*1024, 64, 2*1024/64/4);
 	l1d = new SACache(2*1024, 64, 2*1024/64/8);
 	l2 = new SACache(8*1024, 64, 8*1024/64/8);

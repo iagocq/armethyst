@@ -41,46 +41,6 @@
 
 using namespace std;
 
-void FACache::splitAddress(uint64_t address, uint64_t &tag, uint64_t &offset) {
-	offset = address & offsetMask;
-	tag = address & ~offsetMask;
-}
-
-bool FACache::findTag(uint64_t tag, unsigned int &idx) {
-	for (int i = 0; i < associativity; i++) {
-		// o bit menos significativo é utilizado para marcar a linha como suja,
-		// portanto o desconsideramos quando comparamos com tag
-		if ((directory[i] & ~1) == tag) {
-			idx = i;
-			return true;
-		}
-	}
-
-	return false;
-}
-
-void FACache::setDirty(unsigned int idx) {
-	// uint64_t firstTag, secondTag, offset;
-
-	directory[idx] |= 1;
-
-	// caso escrever `bytes` bytes começando do endereço ultrapassar uma linha,
-	// então devemos marcar a próxima como suja também.
-
-	// splitAddress(address, firstTag, offset);
-	// splitAddress(address + bytes - 1, secondTag, offset);
-	// if (firstTag < secondTag) {
-	// 	if (!findTag(secondTag, idx)) {
-
-	// 	}
-	// 	directory[idx] |= 1;
-	// }
-}
-
-bool FACache::isDirty(unsigned int idx) {
-	return (directory[idx] & 1) == 1;
-}
-
 /**
  * Constructs a FACache of 'size' bytes organized in lines of 'lineSize' bytes.
  * 
@@ -102,6 +62,9 @@ FACache::FACache(unsigned int size, unsigned int lineSize) : Cache::Cache(size, 
 
 	// se lineSize = 2^n, subtrair 1 faz com que se torne numa máscara para
 	// selecionar os n primeiros bits do address, que é o offset.
+	//
+	// por exemplo, lineSize = 8 = 2^3 = 0b1000
+	// lineSize - 1 = 0b0111
 	offsetMask = lineSize - 1;
 
 	numSets = 1; // fully associative cache does not have sets
@@ -133,6 +96,24 @@ bool FACache::read32(uint64_t address, uint32_t * value) {
 		*value = *((uint32_t *) &data[i*lineSize + offset]);
 		return true;
 	}
+}
+
+void FACache::splitAddress(uint64_t address, uint64_t &tag, uint64_t &offset) {
+	offset = address & offsetMask;
+	tag = address & ~offsetMask;
+}
+
+bool FACache::findTag(uint64_t tag, unsigned int &idx) {
+	for (int i = 0; i < associativity; i++) {
+		// o bit menos significativo é utilizado para marcar a linha como suja,
+		// portanto o desconsideramos quando comparamos com tag
+		if ((directory[i] & ~1) == tag) {
+			idx = i;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
@@ -174,6 +155,10 @@ bool FACache::write32(uint64_t address, uint32_t value) {
 		setDirty(i);
 		return true;
 	}
+}
+
+void FACache::setDirty(unsigned int idx) {
+	directory[idx] |= 1;
 }
 
 /**
@@ -232,4 +217,8 @@ char * FACache::fetchLine(uint64_t address, char * data) {
 	// atualiza o �ndice para o pr�ximo fetch (estrat�gia FIFO para escolha da linha)
 	writeIndex = (writeIndex + 1) % associativity;
 	return removedLine;
+}
+
+bool FACache::isDirty(unsigned int idx) {
+	return (directory[idx] & 1) == 1;
 }
